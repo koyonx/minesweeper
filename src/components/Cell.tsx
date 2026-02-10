@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Cell as CellType } from '../types';
+import { usePrevious } from '../hooks/usePrevious';
 
 interface CellProps {
   cell: CellType;
@@ -8,7 +9,22 @@ interface CellProps {
 }
 
 const Cell: React.FC<CellProps> = ({ cell, onClick, onContextMenu }) => {
+  const [isRevealing, setIsRevealing] = useState(false);
+  const prevState = usePrevious(cell.state);
+
+  useEffect(() => {
+    if (prevState === 'hidden' && cell.state === 'revealed') {
+      setIsRevealing(true);
+    }
+  }, [cell.state, prevState]);
+
+  const handleAnimationEnd = () => {
+    setIsRevealing(false);
+  };
+
   const renderContent = () => {
+    if (isRevealing) return null; // Don't render content during animation
+
     if (cell.state === 'flagged') {
       return '🚩';
     }
@@ -29,7 +45,16 @@ const Cell: React.FC<CellProps> = ({ cell, onClick, onContextMenu }) => {
       className={`cell ${cell.state} value-${cell.value}`}
       onClick={onClick}
       onContextMenu={onContextMenu}
+      style={{ position: 'relative' }} // Needed to contain the shatter pieces
     >
+      {isRevealing && (
+        <div className="shatter-container" onAnimationEnd={handleAnimationEnd}>
+          <div className="shatter-piece" />
+          <div className="shatter-piece" />
+          <div className="shatter-piece" />
+          <div className="shatter-piece" />
+        </div>
+      )}
       {renderContent()}
     </div>
   );

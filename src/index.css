@@ -98,3 +98,45 @@ body {
 .cell.value-6 { color: #008080; }
 .cell.value-7 { color: #000000; }
 .cell.value-8 { color: #808080; }
+
+/* Animation for shattering effect */
+  .shatter-container {
+     position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  
+  .shatter-piece {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    background-color: #777;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+  }
+  
+  .shatter-piece:nth-child(1) { top: 0; left: 0; animation-name: shatter-tl; }
+  .shatter-piece:nth-child(2) { top: 0; left: 50%; animation-name: shatter-tr; }
+  .shatter-piece:nth-child(3) { top: 50%; left: 0; animation-name: shatter-bl; }
+  .shatter-piece:nth-child(4) { top: 50%; left: 50%; animation-name: shatter-br; }
+   
+  @keyframes shatter-tl {
+    from { transform: translate(0, 0); opacity: 1; }
+    to { transform: translate(-40px, -40px) rotate(-90deg); opacity: 0; }
+  }
+  @keyframes shatter-tr {
+    from { transform: translate(0, 0); opacity: 1; }
+    to { transform: translate(40px, -40px) rotate(90deg); opacity: 0; }
+  }
+  @keyframes shatter-bl {
+    from { transform: translate(0, 0); opacity: 1; }
+    to { transform: translate(-40px, 40px) rotate(90deg); opacity: 0; }
+  }
+  @keyframes shatter-br {
+    from { transform: translate(0, 0); opacity: 1; }
+    to { transform: translate(40px, 40px) rotate(-90deg); opacity: 0; }
+  }
