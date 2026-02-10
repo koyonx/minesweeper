@@ -22,11 +22,28 @@ function App() {
   const [status, setStatus] = useState<GameStatus>('playing');
   const [mineCount, setMineCount] = useState(DIFFICULTY_SETTINGS[difficulty].mines);
   const [isFirstClick, setIsFirstClick] = useState(true);
+  const [time, setTime] = useState(0);
 
   const settings = DIFFICULTY_SETTINGS[difficulty];
 
+  // Timer effect
   useEffect(() => {
-    if (isFirstClick) return; // Don't check for win on the initial empty board
+    let interval: number | undefined = undefined;
+
+    if (status === 'playing' && !isFirstClick) {
+      interval = window.setInterval(() => {
+        setTime(prevTime => prevTime + 1);
+      }, 1000);
+    }
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [status, isFirstClick]);
+
+  // Win condition effect
+  useEffect(() => {
+    if (isFirstClick) return; 
     const revealedCells = board.flat().filter(cell => cell.state === 'revealed').length;
     const totalSafeCells = settings.rows * settings.cols - settings.mines;
     if (revealedCells === totalSafeCells && status === 'playing') {
@@ -41,6 +58,7 @@ function App() {
     setStatus('playing');
     setMineCount(mines);
     setIsFirstClick(true);
+    setTime(0);
   };
 
   const revealCell = (r: number, c: number, boardToReveal: Cell[][]) => {
@@ -89,7 +107,7 @@ function App() {
 
   const handleContextMenu = (row: number, col: number, e: React.MouseEvent) => {
     e.preventDefault();
-    if (status !== 'playing' || isFirstClick) return; // Can't flag on first click
+    if (status !== 'playing' || isFirstClick) return;
 
     const newBoard = JSON.parse(JSON.stringify(board));
     const cell = newBoard[row][col];
@@ -113,6 +131,7 @@ function App() {
         <button onClick={() => handleReset('hard')} disabled={difficulty === 'hard'}>Hard</button>
       </div>
       <div className="header" style={{ width: settings.cols * 40 }}>
+        <div>Time: {time}</div>
         <div>Mines: {mineCount}</div>
         <button onClick={() => handleReset()}>New Game</button>
         <div className="status">
