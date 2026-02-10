@@ -4,40 +4,50 @@ import { createBoard } from './logic';
 import type { Cell } from './types';
 
 // Game settings
-const ROWS = 10;
-const COLS = 10;
-const MINES = 15;
+const DIFFICULTY_SETTINGS = {
+  easy: { rows: 10, cols: 10, mines: 15 },
+  medium: { rows: 16, cols: 16, mines: 40 },
+  hard: { rows: 16, cols: 30, mines: 99 },
+};
 
+type Difficulty = keyof typeof DIFFICULTY_SETTINGS;
 type GameStatus = 'playing' | 'won' | 'lost';
 
 function App() {
-  const [board, setBoard] = useState<Cell[][]>(() => createBoard(ROWS, COLS, MINES));
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+  const [board, setBoard] = useState<Cell[][]>(() => {
+    const { rows, cols, mines } = DIFFICULTY_SETTINGS[difficulty];
+    return createBoard(rows, cols, mines);
+  });
   const [status, setStatus] = useState<GameStatus>('playing');
-  const [mineCount, setMineCount] = useState(MINES);
+  const [mineCount, setMineCount] = useState(DIFFICULTY_SETTINGS[difficulty].mines);
+
+  const settings = DIFFICULTY_SETTINGS[difficulty];
 
   useEffect(() => {
     const revealedCells = board.flat().filter(cell => cell.state === 'revealed').length;
-    const totalSafeCells = ROWS * COLS - MINES;
+    const totalSafeCells = settings.rows * settings.cols - settings.mines;
     if (revealedCells === totalSafeCells && status === 'playing') {
       setStatus('won');
     }
-  }, [board, status]);
+  }, [board, status, settings]);
 
-  const handleReset = () => {
-    setBoard(createBoard(ROWS, COLS, MINES));
+  const handleReset = (newDifficulty: Difficulty = difficulty) => {
+    const { rows, cols, mines } = DIFFICULTY_SETTINGS[newDifficulty];
+    setDifficulty(newDifficulty);
+    setBoard(createBoard(rows, cols, mines));
     setStatus('playing');
-    setMineCount(MINES);
+    setMineCount(mines);
   };
 
   const revealCell = (r: number, c: number, newBoard: Cell[][]) => {
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS || newBoard[r][c].state !== 'hidden') {
+    if (r < 0 || r >= settings.rows || c < 0 || c >= settings.cols || newBoard[r][c].state !== 'hidden') {
       return;
     }
 
     newBoard[r][c].state = 'revealed';
 
     if (newBoard[r][c].value === 0) {
-      // Reveal neighbors recursively
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
           if (dr === 0 && dc === 0) continue;
@@ -55,7 +65,6 @@ function App() {
 
     if (clickedCell.value === 'mine') {
       setStatus('lost');
-      // Reveal all mines
       const newBoard = board.map(r => r.map(cell => {
         if (cell.value === 'mine') cell.state = 'revealed';
         return cell;
@@ -89,9 +98,14 @@ function App() {
   return (
     <div className="app">
       <h1>Minesweeper</h1>
-      <div className="header">
+      <div className="difficulty-selector">
+        <button onClick={() => handleReset('easy')} disabled={difficulty === 'easy'}>Easy</button>
+        <button onClick={() => handleReset('medium')} disabled={difficulty === 'medium'}>Medium</button>
+        <button onClick={() => handleReset('hard')} disabled={difficulty === 'hard'}>Hard</button>
+      </div>
+      <div className="header" style={{ width: settings.cols * 40 }}>
         <div>Mines: {mineCount}</div>
-        <button onClick={handleReset}>New Game</button>
+        <button onClick={() => handleReset()}>New Game</button>
         <div className="status">
           {status === 'playing' && 'Playing...'}
           {status === 'won' && 'You Won! 🎉'}

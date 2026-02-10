@@ -20,12 +20,36 @@ body {
   text-align: center;
 }
 
+.difficulty-selector {
+  margin-bottom: 1rem;
+}
+
+.difficulty-selector button {
+  margin: 0 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+.difficulty-selector button:disabled {
+  background-color: #007bff;
+  color: white;
+  cursor: default;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 1rem 0;
-  width: 400px;
+  padding: 0 1rem;
+  box-sizing: border-box; /* Ensures padding is included in width */
 }
 
 .board {
@@ -48,6 +72,7 @@ body {
   font-weight: bold;
   user-select: none;
   background-color: #444;
+  box-sizing: border-box; /* Ensures consistent cell size */
 }
 
 .cell.hidden {
@@ -62,6 +87,7 @@ body {
 
 .cell.revealed {
   background-color: #333;
+  border: 1px solid #777;
 }
 
 .cell.value-1 { color: #0000ff; }
