@@ -23,7 +23,7 @@ const Cell: React.FC<CellProps> = ({ cell, onClick, onContextMenu }) => {
   };
 
   const renderContent = () => {
-    if (isRevealing) return null; // Don't render content during animation
+    // if (isRevealing) return null; // This line is removed
 
     if (cell.state === 'flagged') {
       return '🚩';

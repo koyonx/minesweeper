@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Board from './components/Board';
-import { createBoard } from './logic';
+import { createBoard, populateBoard } from './logic';
 import type { Cell } from './types';
 
 // Game settings
@@ -16,42 +16,45 @@ type GameStatus = 'playing' | 'won' | 'lost';
 function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [board, setBoard] = useState<Cell[][]>(() => {
-    const { rows, cols, mines } = DIFFICULTY_SETTINGS[difficulty];
-    return createBoard(rows, cols, mines);
+    const { rows, cols } = DIFFICULTY_SETTINGS[difficulty];
+    return createBoard(rows, cols);
   });
   const [status, setStatus] = useState<GameStatus>('playing');
   const [mineCount, setMineCount] = useState(DIFFICULTY_SETTINGS[difficulty].mines);
+  const [isFirstClick, setIsFirstClick] = useState(true);
 
   const settings = DIFFICULTY_SETTINGS[difficulty];
 
   useEffect(() => {
+    if (isFirstClick) return; // Don't check for win on the initial empty board
     const revealedCells = board.flat().filter(cell => cell.state === 'revealed').length;
     const totalSafeCells = settings.rows * settings.cols - settings.mines;
     if (revealedCells === totalSafeCells && status === 'playing') {
       setStatus('won');
     }
-  }, [board, status, settings]);
+  }, [board, status, settings, isFirstClick]);
 
   const handleReset = (newDifficulty: Difficulty = difficulty) => {
     const { rows, cols, mines } = DIFFICULTY_SETTINGS[newDifficulty];
     setDifficulty(newDifficulty);
-    setBoard(createBoard(rows, cols, mines));
+    setBoard(createBoard(rows, cols));
     setStatus('playing');
     setMineCount(mines);
+    setIsFirstClick(true);
   };
 
-  const revealCell = (r: number, c: number, newBoard: Cell[][]) => {
-    if (r < 0 || r >= settings.rows || c < 0 || c >= settings.cols || newBoard[r][c].state !== 'hidden') {
+  const revealCell = (r: number, c: number, boardToReveal: Cell[][]) => {
+    if (r < 0 || r >= settings.rows || c < 0 || c >= settings.cols || boardToReveal[r][c].state !== 'hidden') {
       return;
     }
 
-    newBoard[r][c].state = 'revealed';
+    boardToReveal[r][c].state = 'revealed';
 
-    if (newBoard[r][c].value === 0) {
+    if (boardToReveal[r][c].value === 0) {
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
           if (dr === 0 && dc === 0) continue;
-          revealCell(r + dr, c + dc, newBoard);
+          revealCell(r + dr, c + dc, boardToReveal);
         }
       }
     }
@@ -60,12 +63,19 @@ function App() {
   const handleCellClick = (row: number, col: number) => {
     if (status !== 'playing') return;
 
-    const clickedCell = board[row][col];
+    let currentBoard = JSON.parse(JSON.stringify(board));
+
+    if (isFirstClick) {
+      setIsFirstClick(false);
+      currentBoard = populateBoard(currentBoard, settings.mines, row, col);
+    }
+
+    const clickedCell = currentBoard[row][col];
     if (clickedCell.state !== 'hidden') return;
 
     if (clickedCell.value === 'mine') {
       setStatus('lost');
-      const newBoard = board.map(r => r.map(cell => {
+      const newBoard = currentBoard.map(r => r.map(cell => {
         if (cell.value === 'mine') cell.state = 'revealed';
         return cell;
       }));
@@ -73,14 +83,13 @@ function App() {
       return;
     }
 
-    const newBoard = JSON.parse(JSON.stringify(board));
-    revealCell(row, col, newBoard);
-    setBoard(newBoard);
+    revealCell(row, col, currentBoard);
+    setBoard(currentBoard);
   };
 
   const handleContextMenu = (row: number, col: number, e: React.MouseEvent) => {
     e.preventDefault();
-    if (status !== 'playing') return;
+    if (status !== 'playing' || isFirstClick) return; // Can't flag on first click
 
     const newBoard = JSON.parse(JSON.stringify(board));
     const cell = newBoard[row][col];
